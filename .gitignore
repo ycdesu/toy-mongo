@@ -1,7 +1,18 @@
 *.class
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+.gradle
+.gradletasknamecache
+gradlew.bat
+build/
+**/build/
+**/bin/
+/out
+.DS_Store
+.idea
+*.ipr
+*.iws
+*.iml
+*.swp
 
 # Package Files #
 *.jar
