@@ -6,6 +6,7 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url "http://repo.spring.io/libs-release" }
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
@@ -24,11 +25,15 @@ jar {
 repositories {
     mavenLocal()
     mavenCentral()
+    maven { url "http://repo.spring.io/libs-release" }
 }
 
 // In this section you declare the dependencies for your production and test code
 dependencies {
     compile 'com.google.guava:guava:17.0'
+
     compile 'org.springframework.boot:spring-boot-starter-web'
+    compile 'org.springframework.boot:spring-boot-starter-actuator'
+
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
