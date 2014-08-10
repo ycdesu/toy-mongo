@@ -66,7 +66,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    * @throws java.lang.NullPointerException if {@code map} is null
    */
   public BTreeMap(Map<? extends K, ? extends V> map) {
-    comparator = null;
+    comparator = Optional.empty();
     putAll(Preconditions.checkNotNull(map));
   }
 
