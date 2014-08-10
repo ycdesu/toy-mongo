@@ -31,6 +31,7 @@ repositories {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     compile 'com.google.guava:guava:17.0'
+    compile 'com.google.jimfs:jimfs:1.0'
 
     compile 'org.springframework.boot:spring-boot-starter-web'
     compile 'org.springframework.boot:spring-boot-starter-actuator'
