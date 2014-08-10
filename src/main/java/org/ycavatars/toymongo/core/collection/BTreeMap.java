@@ -78,11 +78,21 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   private static class Node<K, V> {
     Optional<Entry<K, V>> first;
 
+    //TODO doubly linkedlist
     Optional<Entry<K, V>> last;
 
-    Node(Entry<K, V> first, Entry<K, V> last) {
+    Optional<Entry<K, V>> current;
+
+    Node(Entry<K, V> first, Entry<K, V> last, Entry<K, V> current) {
       this.first = Optional.ofNullable(first);
       this.last = Optional.ofNullable(last);
+      this.current = Optional.ofNullable(current);
+    }
+
+    Node(Node<K, V> that) {
+      this.first = that.first;
+      this.last = that.last;
+      this.current = that.current;
     }
   }
 
@@ -173,8 +183,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    *                              does not permit null keys
    */
   @Override public V get(Object key) {
-    Preconditions.checkNotNull(key);
-    return super.get(key);
+    return getEntry(Preconditions.checkNotNull(key))
+        .flatMap(node -> node.current) // to Entry optional
+        .map(entry -> entry.value)
+        .orElse(null);
   }
 
   private Optional<Node<K, V>> getEntry(Object key) {
@@ -182,23 +194,33 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       return getEntryUsingComparator(key);
     }
 
-    // start from root
-    if (root.isPresent()) {
-      Node<K, V> node = root.get();
-
-      //TODO calculate index, start from first or last
+    //TODO initialize root
+    assert root.isPresent();
+    Optional<Node<K, V>> node = root;
+    do {
       @SuppressWarnings("unchecked")
       Comparable<K> k = (Comparable<K>) key;
 
-      Optional<Entry<K, V>> entry = node.first;
+      Optional<Entry<K, V>> entry = node.get().first;
+      Optional<Entry<K, V>> lastEntry = Optional.empty();
       while (entry.isPresent()) {
-        Optional<K> entryKey = entry.flatMap(e -> e.key).ifPresent();
-        if (entryKey.isPresent() &&
-            k.compareTo(entryKey.get()) > 0) {
-
+        Entry<K, V> e = entry.get();
+        int cmp = k.compareTo(e.key);
+        if (cmp == 0) {
+          return node;
+        } else if (cmp > 0) {
+          lastEntry = entry;
+          entry = e.nextEntry;
+        } else {
+          node = e.leftChild;
+          break;
         }
       }
-    }
+
+      if (lastEntry.isPresent()) {
+        node = lastEntry.get().rightChild;
+      }
+    } while (node.isPresent());
 
     // if the tree is empty
     return Optional.empty();
