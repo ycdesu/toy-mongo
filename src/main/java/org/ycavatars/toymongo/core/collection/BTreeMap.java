@@ -73,15 +73,27 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   /**
    * Node in the BTree.
    */
-  private interface Node {
+  private static class Node {
 
+    // e[0].key <= e[1].key <= ... <= e[n].key
+    Entry[] keys;
+
+    Node[] children;
+
+    boolean isLeaf;
+
+    Node(Entry[] keys, Node[] children, boolean isLeaf) {
+      this.keys = keys;
+      this.children = children;
+      this.isLeaf = isLeaf;
+    }
   }
 
   private static final class Entry<K, V> implements Map.Entry<K, V> {
     K key;
     V value;
 
-    private Entry(K key, V value) {
+    Entry(K key, V value) {
       this.key = key;
       this.value = value;
     }
