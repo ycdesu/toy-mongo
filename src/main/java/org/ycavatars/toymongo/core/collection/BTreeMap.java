@@ -30,7 +30,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    */
   private final Optional<Comparator<? super K>> comparator;
 
-  private Optional<Node> root = Optional.empty();
+  private Optional<Node<K, V>> root = Optional.empty();
 
   /**
    * The number of entries in the tree
@@ -75,53 +75,51 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   /**
    * Node in the BTree.
    */
-  private static class Node {
-    Optional<Entry> first;
+  private static class Node<K, V> {
+    Optional<Entry<K, V>> first;
 
-    Optional<Entry> last;
+    Optional<Entry<K, V>> last;
 
-    Node(Entry first, Entry last) {
+    Node(Entry<K, V> first, Entry<K, V> last) {
       this.first = Optional.ofNullable(first);
       this.last = Optional.ofNullable(last);
     }
   }
 
   /**
-   * Object inside BTree Node. The object points to a child node if {@code child} is
-   * present and {@code key} is absent. Otherwise, this object holds an
-   * {@code key}.
-   * <p>
-   * Note that entry or child has to be empty.
+   * Object inside BTree Node.
    */
   private static final class Entry<K, V> implements Map.Entry<K, V> {
-    Optional<K> key;
-    Optional<V> value;
+    K key;
+    V value;
 
-    Optional<Node> child;
+    Optional<Entry<K, V>> prevEntry;
+    Optional<Entry<K, V>> nextEntry;
 
-    Optional<Entry> next;
-    Optional<Entry> prev;
+    Optional<Node<K, V>> leftChild;
+    Optional<Node<K, V>> rightChild;
 
-    Entry(K key, V value, Node child, Entry next, Entry prev) {
-      this.key = Optional.ofNullable(key);
-      this.value = Optional.ofNullable(value);
-      this.child = Optional.ofNullable(child);
-      this.next = Optional.ofNullable(next);
-      this.prev = Optional.ofNullable(prev);
-      Preconditions.checkArgument(this.key.isPresent() ^ this.child.isPresent());
+    Entry(K key, V value, Entry<K, V> prevEntry, Entry<K, V> nextEntry,
+        Node<K, V> leftChild, Node<K, V> rightChild) {
+      this.key = Preconditions.checkNotNull(key);
+      this.value = value;
+      this.prevEntry = Optional.ofNullable(prevEntry);
+      this.nextEntry = Optional.ofNullable(nextEntry);
+      this.leftChild = Optional.ofNullable(leftChild);
+      this.rightChild = Optional.ofNullable(rightChild);
     }
 
     @Override public K getKey() {
-      return this.key.get();
+      return key;
     }
 
     @Override public V getValue() {
-      return this.value.get();
+      return value;
     }
 
     @Override public V setValue(V value) {
-      V old = this.value.get();
-      this.value = Optional.ofNullable(value);
+      V old = this.value;
+      this.value = value;
       return old;
     }
 
@@ -179,21 +177,35 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     return super.get(key);
   }
 
-  private Optional<Node> getKey(Object key) {
+  private Optional<Node<K, V>> getEntry(Object key) {
+    if (comparator.isPresent()) {
+      return getEntryUsingComparator(key);
+    }
 
     // start from root
     if (root.isPresent()) {
-      Node node = root.get();
+      Node<K, V> node = root.get();
 
       //TODO calculate index, start from first or last
-      Optional<Key> keyOptional = node.first;
-      while (keyOptional.isPresent()) {
-        co
+      @SuppressWarnings("unchecked")
+      Comparable<K> k = (Comparable<K>) key;
+
+      Optional<Entry<K, V>> entry = node.first;
+      while (entry.isPresent()) {
+        Optional<K> entryKey = entry.flatMap(e -> e.key).ifPresent();
+        if (entryKey.isPresent() &&
+            k.compareTo(entryKey.get()) > 0) {
+
+        }
       }
     }
 
     // if the tree is empty
     return Optional.empty();
+  }
+
+  private Optional<Node<K, V>> getEntryUsingComparator(Object key) {
+    return null;
   }
 
   @Override public Set<Map.Entry<K, V>> entrySet() {
