@@ -217,6 +217,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
         }
       }
 
+      // the key is greater than every entry in this node
       if (lastEntry.isPresent()) {
         node = lastEntry.get().rightChild;
       }
