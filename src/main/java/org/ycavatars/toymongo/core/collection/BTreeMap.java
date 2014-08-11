@@ -83,6 +83,8 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
     boolean isLeaf;
 
+    int keySize = 0;
+
     //TODO apply load factor, resize arrays
 
     // keys
@@ -172,51 +174,32 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    *                              does not permit null keys
    */
   @Override public V get(Object key) {
-    return getEntry(Preconditions.checkNotNull(key))
-        .flatMap(node -> node.current) // to Entry optional
-        .map(entry -> entry.value)
-        .orElse(null);
+    return root.isPresent() ? getEntry(root.get(), key).get().value : null;
   }
 
-  private Optional<Node<K, V>> getEntry(Object key) {
+  @SuppressWarnings("unchecked")
+  private Optional<Entry<K, V>> getEntry(Node<K, V> node, Object key) {
     if (comparator.isPresent()) {
       return getEntryUsingComparator(key);
     }
 
-    //TODO initialize root
-    assert root.isPresent();
-    Optional<Node<K, V>> node = root;
-    do {
-      @SuppressWarnings("unchecked")
-      Comparable<K> k = (Comparable<K>) key;
+    Comparable<K> k = (Comparable<K>) key;
 
-      Optional<Entry<K, V>> entry = node.get().first;
-      Optional<Entry<K, V>> lastEntry = Optional.empty();
-      while (entry.isPresent()) {
-        Entry<K, V> e = entry.get();
-        int cmp = k.compareTo(e.key);
-        if (cmp == 0) {
-          return node;
-        } else if (cmp > 0) {
-          lastEntry = entry;
-          entry = e.nextEntry;
-        } else {
-          node = e.leftChild;
-          break;
-        }
-      }
+    int index = 0;
+    while (index < node.keySize && k.compareTo((K) node.entries[index].key) > 0) {
+      index++;
+    }
 
-      // the key is greater than every entry in this node
-      if (lastEntry.isPresent()) {
-        node = lastEntry.get().rightChild;
-      }
-    } while (node.isPresent());
-
-    // if the tree is empty
-    return Optional.empty();
+    if (index < node.keySize && k.equals(node.entries[index].key)) {
+      return Optional.of(node.entries[index]);
+    } else if (node.isLeaf) {
+      return Optional.empty();
+    } else {
+      return getEntry(node.children[index], key);
+    }
   }
 
-  private Optional<Node<K, V>> getEntryUsingComparator(Object key) {
+  private Optional<Entry<K, V>> getEntryUsingComparator(Object key) {
     return null;
   }
 
