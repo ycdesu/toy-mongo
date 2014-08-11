@@ -20,9 +20,13 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   /**
    * Must be greater than 2.
    */
-  private static final int MAX_NODE_DEGREE = 1001;
+  private static final int MIN_NODE_DEGREE = 500;
 
-  private static final int MAX_NODE_KEYS = MAX_NODE_DEGREE - 1;
+  private static final int MIN_NODE_KEYS = MIN_NODE_DEGREE - 1;
+
+  private static final int MAX_NODE_DEGREE = 2 * MIN_NODE_DEGREE;
+
+  private static final int MAX_NODE_KEYS = 2 * MIN_NODE_DEGREE - 1;
 
   /**
    * Use this comparator to maintain the key order or empty if use the key natural
@@ -76,24 +80,16 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    * Node in the BTree.
    */
   private static class Node<K, V> {
-    Optional<Entry<K, V>> first;
 
-    //TODO doubly linkedlist
-    Optional<Entry<K, V>> last;
+    boolean isLeaf;
 
-    Optional<Entry<K, V>> current;
+    //TODO apply load factor, resize arrays
 
-    Node(Entry<K, V> first, Entry<K, V> last, Entry<K, V> current) {
-      this.first = Optional.ofNullable(first);
-      this.last = Optional.ofNullable(last);
-      this.current = Optional.ofNullable(current);
-    }
+    // keys
+    Entry[] entries = new Entry[MAX_NODE_KEYS];
 
-    Node(Node<K, V> that) {
-      this.first = that.first;
-      this.last = that.last;
-      this.current = that.current;
-    }
+    // degrees
+    Node[] children = new Node[MAX_NODE_DEGREE];
   }
 
   /**
@@ -102,26 +98,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   private static final class Entry<K, V> implements Map.Entry<K, V> {
     K key;
     V value;
-
-    Optional<Entry<K, V>> prevEntry;
-    Optional<Entry<K, V>> nextEntry;
-
-    Optional<Node<K, V>> leftChild;
-    Optional<Node<K, V>> rightChild;
-
-    Entry(K key, V value) {
-      this(key, value, null, null, null, null);
-    }
-
-    Entry(K key, V value, Entry<K, V> prevEntry, Entry<K, V> nextEntry,
-        Node<K, V> leftChild, Node<K, V> rightChild) {
-      this.key = Preconditions.checkNotNull(key);
-      this.value = value;
-      this.prevEntry = Optional.ofNullable(prevEntry);
-      this.nextEntry = Optional.ofNullable(nextEntry);
-      this.leftChild = Optional.ofNullable(leftChild);
-      this.rightChild = Optional.ofNullable(rightChild);
-    }
 
     @Override public K getKey() {
       return key;
