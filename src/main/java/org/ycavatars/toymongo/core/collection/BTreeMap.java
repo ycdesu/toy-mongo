@@ -109,6 +109,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     Optional<Node<K, V>> leftChild;
     Optional<Node<K, V>> rightChild;
 
+    Entry(K key, V value) {
+      this(key, value, null, null, null, null);
+    }
+
     Entry(K key, V value, Entry<K, V> prevEntry, Entry<K, V> nextEntry,
         Node<K, V> leftChild, Node<K, V> rightChild) {
       this.key = Preconditions.checkNotNull(key);
@@ -155,6 +159,15 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    *                              does not permit null keys
    */
   @Override public V put(K key, V value) {
+    Preconditions.checkNotNull(key);
+    // create empty btree
+    if (!root.isPresent()) {
+      Entry<K, V> entry = new Entry<>(key, value);
+      root = Optional.of(new Node<>(entry, null, null));
+      size = 1;
+      modCount++;
+      return null;
+    }
     return null;
   }
 
