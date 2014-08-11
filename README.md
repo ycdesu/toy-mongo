@@ -1,7 +1,7 @@
 toy-mongo
 =========
 
-Try to implement mongodb internal data structure which includes index and extents. First of all,
+Try to implement mongodb internal data structure including index and extents. First of all,
 I implement a BTreeMap instead of applying JDK TreeMap. The JDK TreeMap is implemented using
 red-black tree, and it will have a large height if we have many, many nodes. Next, I will use
 [google's in-memory file system](https://github.com/google/jimfs) to store data. Each document
