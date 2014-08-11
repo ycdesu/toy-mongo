@@ -158,6 +158,44 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     return null;
   }
 
+  /**
+   * Split {@code parent.children[index]}.
+   *
+   * @param parent
+   * @param index
+   */
+  @SuppressWarnings("unchecked")
+  private void splitChild(Node<K, V> parent, int index) {
+    Node<K, V> rightNode = new Node<>();
+    Node<K, V> fullNode = parent.children[index];
+    rightNode.isLeaf = fullNode.isLeaf;
+
+    // fullNode.entries[MIN_NODE_KEYS] will be the median key
+    System.arraycopy(fullNode.entries, MIN_NODE_KEYS + 1,
+        rightNode.entries, 0, fullNode.keySize - MIN_NODE_KEYS);
+    rightNode.keySize = fullNode.keySize - MIN_NODE_KEYS;
+
+    if (!fullNode.isLeaf) {
+      System.arraycopy(fullNode.children, MIN_NODE_KEYS + 1, rightNode.children, 0
+          , fullNode.keySize + 1 - MIN_NODE_KEYS // num of children is more than keySize
+      );
+    }
+    fullNode.keySize = MIN_NODE_KEYS;
+
+    // shift children to right
+    System.arraycopy(parent.children, index, parent.children, index + 1,
+        parent.keySize + 1 - index);
+    // parent.children[index] still point to the fullNode
+    parent.children[index + 1] = rightNode;
+
+    // shift keys to right
+    System.arraycopy(parent.entries, index, parent.entries, index + 1,
+        parent.keySize - index);
+    // set the median key
+    parent.entries[index] = fullNode.entries[MIN_NODE_KEYS];
+
+    parent.keySize++;
+  }
 
   /**
    * Returns the value to which the specified key is mapped,
