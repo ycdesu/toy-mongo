@@ -118,6 +118,15 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   }
 
   /**
+   * Create an empty tree.
+   */
+  private void initialize() {
+    Node<K, V> emptyNode = new Node<>();
+    emptyNode.isLeaf = true;
+    root = Optional.of(emptyNode);
+  }
+
+  /**
    * Associates the specified value with the specified key in this map.
    * If the map previously contained a mapping for the key, the old value is replaced by the specified value.  (A map
    * <tt>m</tt> is said to contain a mapping for a key <tt>k</tt> if and only
@@ -148,6 +157,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
     return null;
   }
+
 
   /**
    * Returns the value to which the specified key is mapped,
