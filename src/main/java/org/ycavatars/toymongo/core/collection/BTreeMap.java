@@ -310,6 +310,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   }
 
   private Optional<Entry<K, V>> getEntryUsingComparator(Object key) {
+    //TODO
     return null;
   }
 
@@ -322,12 +323,14 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     return ((Comparable<? super K>) key1).compareTo((K) key2);
   }
 
+  @SuppressWarnings("unchecked")
   private int compareUsingComparator(Object key1, Object key2) {
     Comparator<? super K> cmp = comparator.get();
     return cmp.compare((K) key1, (K) key2);
   }
 
   @Override public Set<Map.Entry<K, V>> entrySet() {
+    //TODO
     return null;
   }
 }
