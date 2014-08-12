@@ -101,6 +101,11 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     K key;
     V value;
 
+    Entry(K key, V value) {
+      this.key = key;
+      this.value = value;
+    }
+
     @Override public K getKey() {
       return key;
     }
@@ -147,15 +152,74 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    */
   @Override public V put(K key, V value) {
     Preconditions.checkNotNull(key);
+
     // create empty btree
     if (!root.isPresent()) {
-      Entry<K, V> entry = new Entry<>(key, value);
-      root = Optional.of(new Node<>(entry, null, null));
-      size = 1;
+      root = Optional.of(new Node<>());
       modCount++;
-      return null;
     }
-    return null;
+
+    splitRootIfFull();
+
+    return insertNonFull(root.get(), new Entry<>(key, value)).orElse(null);
+  }
+
+  private void splitRootIfFull() {
+    // if the root is full
+    if (root.get().keySize == MAX_NODE_KEYS) {
+      Node<K, V> newRoot = new Node<>();
+      newRoot.isLeaf = false;
+      newRoot.keySize = 0;
+      newRoot.children[0] = root.get();
+      root = Optional.of(newRoot);
+
+      splitChild(newRoot, 0); // split old root node which is the first child of newRoot
+      modCount++;
+    }
+  }
+
+  /**
+   * Insert {@code entry} to {@code node} if the node is a leaf node. Otherwise,
+   * traverse from the node to find the leaf.
+   *
+   * @param node
+   * @param entry
+   */
+  private Optional<V> insertNonFull(Node<K, V> node, Entry<K, V> entry) {
+    int index = node.keySize - 1;
+    // same as binary tree, we add a key to a leaf
+    if (node.isLeaf) {
+      // TODO the comparator may affect the algorithm you choose, and binary search
+      // may not work, so have to add constraints on comparator. Before that, make it
+      // works first.
+      while (index >= 0 && compare(entry.key, node.entries[index]) < 0) {
+        node.entries[index + 1] = node.entries[index];
+        index--;
+      }
+
+      // set the new entry
+      Optional<V> old = Optional.empty();
+      index++;
+      if (Optional.ofNullable(node.entries[index]).isPresent()) {
+        old = Optional.ofNullable((V) node.entries[index].getValue());
+      }
+      node.entries[index] = entry;
+      node.keySize++;
+      return old;
+    } else {
+      while (index >= 0 && compare(entry.key, node.entries[index]) < 0) {
+        index--;
+      }
+      index++;
+      // if the child is full
+      if (node.children[index].keySize == MAX_NODE_KEYS) {
+        splitChild(node, index);
+        if (compare(entry.key, node.entries[index]) > 0) {
+          index++;
+        }
+      }
+      return insertNonFull(node.children[index], entry);
+    }
   }
 
   /**
@@ -231,14 +295,12 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       return getEntryUsingComparator(key);
     }
 
-    Comparable<K> k = (Comparable<K>) key;
-
     int index = 0;
-    while (index < node.keySize && k.compareTo((K) node.entries[index].key) > 0) {
+    while (index < node.keySize && compare((K) key, (K) node.entries[index].key) > 0) {
       index++;
     }
 
-    if (index < node.keySize && k.equals(node.entries[index].key)) {
+    if (index < node.keySize && key.equals(node.entries[index].key)) {
       return Optional.of(node.entries[index]);
     } else if (node.isLeaf) {
       return Optional.empty();
@@ -249,6 +311,20 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
   private Optional<Entry<K, V>> getEntryUsingComparator(Object key) {
     return null;
+  }
+
+  @SuppressWarnings("unchecked")
+  private int compare(Object key1, Object key2) {
+    if (comparator.isPresent()) {
+      return compareUsingComparator(key1, key2);
+    }
+
+    return ((Comparable<? super K>) key1).compareTo((K) key2);
+  }
+
+  private int compareUsingComparator(Object key1, Object key2) {
+    Comparator<? super K> cmp = comparator.get();
+    return cmp.compare((K) key1, (K) key2);
   }
 
   @Override public Set<Map.Entry<K, V>> entrySet() {
