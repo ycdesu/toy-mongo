@@ -203,7 +203,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       // TODO the comparator may affect the algorithm you choose, and binary search
       // may not work, so have to add constraints on comparator. Before that, make it
       // works first.
-      while (index >= 0 && compare(entry.key, node.entries[index]) < 0) {
+      while (index >= 0 && compare(entry.key, node.entries[index].key) < 0) {
         node.entries[index + 1] = node.entries[index];
         index--;
       }
@@ -218,7 +218,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       node.keySize++;
       return old;
     } else {
-      while (index >= 0 && compare(entry.key, node.entries[index]) < 0) {
+      while (index >= 0 && compare(entry.key, node.entries[index].key) < 0) {
         index--;
       }
       index++;
@@ -229,7 +229,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       // if the child is full
       if (node.children[index].keySize == MAX_NODE_KEYS) {
         splitChild(node, index);
-        if (compare(entry.key, node.entries[index]) > 0) {
+        if (compare(entry.key, node.entries[index].key) > 0) {
           index++;
         }
       }
@@ -311,7 +311,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
 
     int index = 0;
-    while (index < node.keySize && compare((K) key, (K) node.entries[index].key) > 0) {
+    while (index < node.keySize && compare(key, node.entries[index].key) > 0) {
       index++;
     }
 
