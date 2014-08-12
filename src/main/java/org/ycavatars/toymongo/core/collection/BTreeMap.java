@@ -17,6 +17,15 @@ import java.util.*;
  */
 public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
+  public static void main(String[] args) {
+    Map<String, String> map = new BTreeMap<>();
+    map.put("www.google.com.tw", "123.123.123.123");
+    map.put("tw.yahoo.com", "222.22.222.22");
+
+    System.out.println(map.get("www.google.com.tw"));
+    System.out.println(map.get("tw.yahoo.com"));
+  }
+
   /**
    * Must be greater than 2.
    */
@@ -155,7 +164,9 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
     // create empty btree
     if (!root.isPresent()) {
-      root = Optional.of(new Node<>());
+      Node<K, V> rootNode = new Node<>();
+      rootNode.isLeaf = true;
+      root = Optional.of(rootNode);
       modCount++;
     }
 
@@ -211,6 +222,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
         index--;
       }
       index++;
+
+      assert Optional.ofNullable(node.children[index]).isPresent()
+          : "the index:" + index + ", the keySize:" + node.keySize;
+
       // if the child is full
       if (node.children[index].keySize == MAX_NODE_KEYS) {
         splitChild(node, index);
