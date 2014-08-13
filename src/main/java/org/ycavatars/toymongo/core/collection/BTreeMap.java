@@ -1,5 +1,6 @@
 package org.ycavatars.toymongo.core.collection;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.util.*;
@@ -16,15 +17,6 @@ import java.util.*;
  * @author ycavatars
  */
 public class BTreeMap<K, V> extends AbstractMap<K, V> {
-
-  public static void main(String[] args) {
-    Map<String, String> map = new BTreeMap<>();
-    map.put("www.google.com.tw", "123.123.123.123");
-    map.put("tw.yahoo.com", "222.22.222.22");
-
-    System.out.println(map.get("www.google.com.tw"));
-    System.out.println(map.get("tw.yahoo.com"));
-  }
 
   /**
    * Must be greater than 2.
@@ -175,7 +167,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     return insertNonFull(root.get(), new Entry<>(key, value)).orElse(null);
   }
 
-  private void splitRootIfFull() {
+  @VisibleForTesting void splitRootIfFull() {
     // if the root is full
     if (root.get().keySize == MAX_NODE_KEYS) {
       Node<K, V> newRoot = new Node<>();
