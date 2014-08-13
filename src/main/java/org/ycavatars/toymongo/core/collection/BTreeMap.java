@@ -239,12 +239,17 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   private void splitChild(Node<K, V> parent, int index) {
     Node<K, V> rightNode = new Node<>();
     Node<K, V> fullNode = parent.children[index];
+
+    assert Optional.ofNullable(fullNode).isPresent();
+
     rightNode.isLeaf = fullNode.isLeaf;
+
+    assert fullNode.entries[MAX_NODE_KEYS - MIN_NODE_KEYS] != null;
 
     // fullNode.entries[MIN_NODE_KEYS] will be the median key
     System.arraycopy(fullNode.entries, MIN_NODE_KEYS + 1,
-        rightNode.entries, 0, fullNode.keySize - MIN_NODE_KEYS);
-    rightNode.keySize = fullNode.keySize - MIN_NODE_KEYS;
+        rightNode.entries, 0, MAX_NODE_KEYS - MIN_NODE_KEYS - 1);
+    rightNode.keySize = MAX_NODE_KEYS - MIN_NODE_KEYS;
 
     if (!fullNode.isLeaf) {
       System.arraycopy(fullNode.children, MIN_NODE_KEYS + 1, rightNode.children, 0

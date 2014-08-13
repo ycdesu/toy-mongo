@@ -25,7 +25,7 @@ public class TestBtreeMap {
   }
 
   @Test
-  public void testPut_existingKeyValue() {
+  public void testPut_rootIsNotFull() {
     BTreeMap<String, String> map = new BTreeMap<>();
     map.put("keyA", "valueA");
     map.put("keyB", "valueB");
@@ -34,8 +34,20 @@ public class TestBtreeMap {
     Assert.assertEquals(map.get("keyB"), "valueB");
   }
 
-  public void testSplitRootIfFull_insertToFullNode() {
-    BTreeMap<String, String> map = new BTreeMap<>();
+  @Test
+  public void testPut_rootIsFull() {
+    Map<String, String> that = new HashMap<>();
+    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
+      that.put("key" + i, " value" + i);
+    }
 
+    BTreeMap<String, String> map = new BTreeMap<>(that);
+    map.put("key1001", "value1001");
+    map.put("key1002", "value1002");
+    map.put("key1003", "value1003");
+
+    Assert.assertEquals(map.get("key1001"), "value1001");
+    Assert.assertEquals(map.get("key1002"), "value1002");
+    Assert.assertEquals(map.get("key1003"), "value1003");
   }
 }
