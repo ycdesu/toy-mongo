@@ -21,13 +21,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   /**
    * Must be greater than 2.
    */
-  private static final int MIN_NODE_DEGREE = 500;
-
-  private static final int MIN_NODE_KEYS = MIN_NODE_DEGREE - 1;
-
-  private static final int MAX_NODE_DEGREE = 2 * MIN_NODE_DEGREE;
-
-  private static final int MAX_NODE_KEYS = 2 * MIN_NODE_DEGREE - 1;
+  static final int MIN_NODE_DEGREE = 500;
+  static final int MIN_NODE_KEYS = MIN_NODE_DEGREE - 1;
+  static final int MAX_NODE_DEGREE = 2 * MIN_NODE_DEGREE;
+  static final int MAX_NODE_KEYS = 2 * MIN_NODE_DEGREE - 1;
 
   /**
    * Use this comparator to maintain the key order or empty if use the key natural
@@ -208,6 +205,9 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       }
       node.entries[index] = entry;
       node.keySize++;
+
+      size++;
+
       return old;
     } else {
       while (index >= 0 && compare(entry.key, node.entries[index].key) < 0) {
@@ -339,5 +339,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   @Override public Set<Map.Entry<K, V>> entrySet() {
     //TODO
     return null;
+  }
+
+  @Override public int size() {
+    //TODO
+    return size;
   }
 }
