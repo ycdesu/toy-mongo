@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * A BTree based {@link java.util.NavigableMap} implementation. The map is sorted
@@ -44,6 +45,8 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    */
   private int modCount = 0;
 
+  private Optional<EntrySet> entrySet = Optional.empty();
+
   /**
    * Create an empty BTreeMap which uses the natural ordering of keys.
    * Note that every key object has to implement {@link java.lang.Comparable}.
@@ -74,6 +77,96 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     putAll(Preconditions.checkNotNull(map));
   }
 
+  class EntrySet extends AbstractSet<Map.Entry<K, V>> {
+    public Iterator<Map.Entry<K, V>> iterator() {
+      // TODO return new EntryIterator(getFirstEntry());
+      return null;
+    }
+
+    public boolean contains(Object o) {
+      if (!(o instanceof Map.Entry)) {
+        return false;
+      }
+      Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
+      Object value = entry.getValue();
+      Optional<Entry<K, V>> p = getEntry(entry.getKey());
+      return p.isPresent() && p.get().value.equals(value);
+    }
+
+    public boolean remove(Object o) {
+      if (!(o instanceof Map.Entry)) {
+        return false;
+      }
+      Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
+      Object value = entry.getValue();
+      Optional<Entry<K, V>> p = getEntry(entry.getKey());
+      if (p.isPresent() && p.get().value.equals(value)) {
+        deleteEntry(p.get());
+        return true;
+      }
+      return false;
+    }
+
+    public int size() {
+      return BTreeMap.this.size();
+    }
+
+    public void clear() {
+      BTreeMap.this.clear();
+    }
+
+    public Spliterator<Map.Entry<K, V>> spliterator() {
+      // TODO return new EntrySpliterator<K, V>(TreeMap.this, null, null, 0, -1, 0);
+      return null;
+    }
+  }
+
+  class EntryIterator<T> implements Iterator<T> {
+    Node<K, V> lastReturnedNode;
+
+    Optional<Entry<K, V>> nextEntry = Optional.empty();
+
+    int lastReturnedEntryIndex = 0;
+
+    int expectedModCount;
+
+    EntryIterator(Node<K, V> root) {
+      this.lastReturnedNode = root;
+      this.nextEntry = Optional.ofNullable(lastReturnedNode.entries[0]);
+      this.expectedModCount = modCount;
+    }
+
+    @Override public boolean hasNext() {
+      return nextEntry.isPresent();
+    }
+
+    @Override public T next() {
+      if(nextEntry.isPresent()){
+
+      }
+      //TODO traverse tree. Node needs a parent pointer.
+      if (lastReturnedEntryIndex < (lastReturnedNode.keySize - 1)) {
+        nextEntry = Optional.of(lastReturnedNode.entries[lastReturnedEntryIndex++]);
+      } else if (lastReturnedEntryIndex == (lastReturnedEntryIndex - 1)) {
+        // check the last entry of current node
+
+      }
+
+
+      return nextEntry.get();
+    }
+
+    @Override public void remove() {
+      //TODO
+    }
+
+    @Override public void forEachRemaining(Consumer<? super T> action) {
+      while (hasNext()) {
+        action.accept(next());
+      }
+    }
+  }
+
   /**
    * Node in the BTree.
    */
@@ -83,6 +176,8 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
     int keySize = 0;
 
+    Optional<Node<K, V>> parent = Optional.empty();
+
     //TODO apply load factor, resize arrays
 
     // keys
@@ -90,6 +185,13 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
     // degrees
     Node[] children = new Node[MAX_NODE_DEGREE];
+
+    void addChild(int childIndex, Node<K, V> child) {
+      Preconditions.checkElementIndex(childIndex, MAX_NODE_DEGREE);
+      this.isLeaf = false;
+      child.parent = Optional.of(this);
+      children[childIndex] = child;
+    }
   }
 
   /**
@@ -118,15 +220,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       return old;
     }
 
-  }
-
-  /**
-   * Create an empty tree.
-   */
-  private void initialize() {
-    Node<K, V> emptyNode = new Node<>();
-    emptyNode.isLeaf = true;
-    root = Optional.of(emptyNode);
   }
 
   /**
@@ -262,7 +355,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     System.arraycopy(parent.children, index, parent.children, index + 1,
         parent.keySize + 1 - index);
     // parent.children[index] still point to the fullNode
-    parent.children[index + 1] = rightNode;
+    parent.addChild(index + 1, rightNode);
 
     // shift keys to right
     System.arraycopy(parent.entries, index, parent.entries, index + 1,
@@ -298,7 +391,17 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    *                              does not permit null keys
    */
   @Override public V get(Object key) {
-    return root.isPresent() ? getEntry(root.get(), key).get().value : null;
+    return getEntry(key).map(e -> e.value).orElse(null);
+  }
+
+  /**
+   * Search the entry from root.
+   *
+   * @param key
+   * @return
+   */
+  private Optional<Entry<K, V>> getEntry(Object key) {
+    return root.isPresent() ? getEntry(root.get(), key) : Optional.empty();
   }
 
   @SuppressWarnings("unchecked")
@@ -319,6 +422,10 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     } else {
       return getEntry(node.children[index], key);
     }
+  }
+
+  private void deleteEntry(Entry<K, V> entry) {
+    //TODO delete entry
   }
 
   private Optional<Entry<K, V>> getEntryUsingComparator(Object key) {
@@ -347,7 +454,16 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   }
 
   @Override public int size() {
-    //TODO
     return size;
+  }
+
+  /**
+   * Removes all of the mappings from this map.
+   * The map will be empty after this call returns.
+   */
+  @Override public void clear() {
+    modCount++;
+    size = 0;
+    root = Optional.empty();
   }
 }
