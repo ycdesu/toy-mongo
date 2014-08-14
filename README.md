@@ -10,7 +10,9 @@ of a document which resides in an extent.
 
 ### B-Tree
 
-//TODO
+`Entry` and `Node` are two important classes inside the map. `Entry` holds key/value pair, and 
+we compare each key to put entry objects into `Node` in the right order. If `Node` is full, it's
+splitted into two children nodes which are stored in `Node.children` array.
 
 ### API
 
