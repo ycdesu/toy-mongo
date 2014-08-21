@@ -21,8 +21,6 @@ public class TestBtreeMap {
 
     BTreeMap<String, String> map = new BTreeMap<>(that);
     Assert.assertEquals(map.size(), BTreeMap.MAX_NODE_KEYS);
-
-    //TODO test equals after implementing entry set
   }
 
   @Test
