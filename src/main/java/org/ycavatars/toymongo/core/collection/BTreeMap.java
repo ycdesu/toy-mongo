@@ -79,9 +79,8 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   }
 
   class EntrySet extends AbstractSet<Map.Entry<K, V>> {
-    public Iterator<Map.Entry<K, V>> iterator() {
-      // TODO return new EntryIterator(getFirstEntry());
-      return null;
+    @Override public Iterator<Map.Entry<K, V>> iterator() {
+      return new CopyEntryIterator<Map.Entry<K, V>>(root.get());
     }
 
     public boolean contains(Object o) {
@@ -463,7 +462,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
   @Override public Set<Map.Entry<K, V>> entrySet() {
     //TODO
-    return null;
+    return new EntrySet();
   }
 
   @Override public int size() {
