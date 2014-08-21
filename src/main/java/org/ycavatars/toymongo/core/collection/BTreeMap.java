@@ -146,7 +146,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
           entries.addAll(Lists.newArrayList(buildEntries(child.get())));
         }
         assert Optional.ofNullable(node.entries[i]).isPresent();
-        entries.add(node.entries[i]);
+        entries.add(new Entry<K, V>(node.entries[i]));
       }
 
       child = Optional.ofNullable(node.children[node.keySize]);
@@ -159,7 +159,9 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
     private Entry[] copyEntries(Node<K, V> node) {
       Entry[] copy = new Entry[node.keySize];
-      System.arraycopy(node.entries, 0, copy, 0, node.keySize);
+      for (int i = 0; i < node.keySize; i++) {
+        copy[i] = new Entry<K,V>(node.entries[i]);
+      }
       return copy;
     }
 
@@ -226,6 +228,11 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     Entry(K key, V value) {
       this.key = key;
       this.value = value;
+    }
+
+    Entry(Entry<K, V> that) {
+      this.key = that.key;
+      this.value = that.value;
     }
 
     @Override public K getKey() {

@@ -91,4 +91,26 @@ public class TestBtreeMap {
     } catch (NoSuchElementException e) {
     }
   }
+
+  @Test
+  public void testCopyEntryIterator_changeNextElement() {
+    Map<String, String> map = new BTreeMap<>();
+    map.put("a", "b");
+
+    Iterator<Map.Entry<String, String>> iterator = map.entrySet().iterator();
+
+    try {
+      Assert.assertTrue(iterator.hasNext());
+      Map.Entry<String, String> e = iterator.next();
+      Assert.assertEquals("a", e.getKey());
+      Assert.assertEquals("b", e.getValue());
+
+      e.setValue("123");
+
+      Assert.assertEquals("b", map.get("a"));
+      Assert.assertEquals("123", e.getValue());
+    } catch (Exception e) {
+      Assert.fail(Throwables.getStackTraceAsString(e));
+    }
+  }
 }
