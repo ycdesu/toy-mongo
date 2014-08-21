@@ -1,11 +1,11 @@
 package org.ycavatars.toymongo.core.collection;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author ycavatars
@@ -54,25 +54,41 @@ public class TestBtreeMap {
 
   @Test
   public void testCopyEntryIterator_fullRoot() {
+    // create map with data
+    List<Map.Entry<String, String>> entries =
+        Lists.newArrayListWithCapacity(BTreeMap.MAX_NODE_KEYS);
     Map<String, String> that = new HashMap<>();
     for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
-      that.put("key" + i, "value" + i);
+      String key = "key" + i;
+      String value = "value" + i;
+      that.put(key, value);
+      entries.add(new BTreeMap.Entry<>(key, value));
     }
-
     BTreeMap<String, String> map = new BTreeMap<>(that);
+
+    // sort key in the same way as BTreeMap
+    entries.sort(Comparator.comparing((Map.Entry e) -> (Comparable) e.getKey()));
+
     Iterator<Map.Entry<String, String>> entrySetIterator = map.entrySet()
         .iterator();
-    int i = 0;
-    while (entrySetIterator.hasNext()) {
-      Map.Entry<String, String> e = entrySetIterator.next();
-      System.out.println(e.getKey() + "::" + e.getValue());
+    for (Map.Entry<String, String> e : entries) {
+      Assert.assertTrue(entrySetIterator.hasNext());
+
+      Map.Entry<String, String> thatEntry = entrySetIterator.next();
+      Assert.assertEquals(e.getKey(), thatEntry.getKey());
+      Assert.assertEquals(e.getValue(), thatEntry.getValue());
     }
-    while (entrySetIterator.hasNext()) {
-      Map.Entry<String, String> e = entrySetIterator.next();
-      Assert.assertEquals("key" + i, e.getKey());
-      Assert.assertEquals("value" + i, e.getValue());
-      i++;
+
+    try {
+      Assert.assertFalse(entrySetIterator.hasNext());
+    } catch (ArrayIndexOutOfBoundsException e) {
+      Assert.fail(Throwables.getStackTraceAsString(e));
     }
-    System.out.println(i);
+
+    try {
+      entrySetIterator.next();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+    }
   }
 }

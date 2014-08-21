@@ -164,11 +164,21 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override public boolean hasNext() {
+      if (currentIndex == entries.length) {
+        return false;
+      }
       Optional<Entry<K, V>> next = Optional.ofNullable(entries[currentIndex]);
       return next.isPresent();
     }
 
     @Override public T next() {
+      if (currentIndex == entries.length) {
+        throw new NoSuchElementException();
+      }
+      if (modCount != expectedModCount) {
+        throw new ConcurrentModificationException();
+      }
+
       Entry<K, V> next = entries[currentIndex];
       currentIndex++;
       return (T) next;
@@ -209,7 +219,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   /**
    * Object inside BTree Node.
    */
-  private static final class Entry<K, V> implements Map.Entry<K, V> {
+  static final class Entry<K, V> implements Map.Entry<K, V> {
     K key;
     V value;
 
