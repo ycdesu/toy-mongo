@@ -14,6 +14,12 @@ of a document which resides in an extent.
 we compare each key to put entry objects into `Node` in the right order. If `Node` is full, it's
 splitted into two children nodes which are stored in `Node.children` array.
 
+#### CopyEntryIterator
+
+The returned iterator provides a snapshot of the entries of this map when it's created. That is,
+copy entries of every node and return. If the map structure is changed while iterating, it'll throw
+ConcurrentModificationException.
+
 ### API
 
 #### Database
