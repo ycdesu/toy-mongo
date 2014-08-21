@@ -2,6 +2,7 @@ package org.ycavatars.toymongo.core.collection;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -121,43 +122,57 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
-  class EntryIterator<T> implements Iterator<T> {
-    Node<K, V> lastReturnedNode;
+  class CopyEntryIterator<T> implements Iterator<T> {
+    Entry[] entries;
 
-    Optional<Entry<K, V>> nextEntry = Optional.empty();
-
-    int lastReturnedEntryIndex = 0;
+    int currentIndex;
 
     int expectedModCount;
 
-    EntryIterator(Node<K, V> root) {
-      this.lastReturnedNode = root;
-      this.nextEntry = Optional.ofNullable(lastReturnedNode.entries[0]);
+    CopyEntryIterator(Node<K, V> root) {
+      this.entries = buildEntries(root);
       this.expectedModCount = modCount;
     }
 
+    private Entry[] buildEntries(Node<K, V> node) {
+      if (node.isLeaf) {
+        return copyEntries(node);
+      }
+
+      List<Entry<K, V>> entries = Lists.newArrayList();
+      Optional<Node> child;
+      for (int i = 0; i < node.keySize; i++) {
+        child = Optional.ofNullable(node.children[i]);
+        if (child.isPresent()) {
+          entries.addAll(Lists.newArrayList(buildEntries(child.get())));
+        }
+        assert Optional.ofNullable(node.entries[i]).isPresent();
+        entries.add(node.entries[i]);
+      }
+
+      child = Optional.ofNullable(node.children[node.keySize]);
+      if (child.isPresent()) {
+        entries.addAll(Lists.newArrayList(buildEntries(child.get())));
+      }
+
+      return entries.toArray(new Entry[0]);
+    }
+
+    private Entry[] copyEntries(Node<K, V> node) {
+      Entry[] copy = new Entry[node.keySize];
+      System.arraycopy(node.entries, 0, copy, 0, node.keySize);
+      return copy;
+    }
+
     @Override public boolean hasNext() {
-      return nextEntry.isPresent();
+      Optional<Entry<K, V>> next = Optional.ofNullable(entries[currentIndex]);
+      return next.isPresent();
     }
 
     @Override public T next() {
-      if(nextEntry.isPresent()){
-
-      }
-      //TODO traverse tree. Node needs a parent pointer.
-      if (lastReturnedEntryIndex < (lastReturnedNode.keySize - 1)) {
-        nextEntry = Optional.of(lastReturnedNode.entries[lastReturnedEntryIndex++]);
-      } else if (lastReturnedEntryIndex == (lastReturnedEntryIndex - 1)) {
-        // check the last entry of current node
-
-      }
-
-
-      return nextEntry.get();
-    }
-
-    @Override public void remove() {
-      //TODO
+      Entry<K, V> next = entries[currentIndex];
+      currentIndex++;
+      return (T) next;
     }
 
     @Override public void forEachRemaining(Consumer<? super T> action) {
@@ -172,13 +187,12 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    */
   private static class Node<K, V> {
 
+    //TODO apply load factor, resize arrays
+
     boolean isLeaf;
 
+    // number of elements in entries array
     int keySize = 0;
-
-    Optional<Node<K, V>> parent = Optional.empty();
-
-    //TODO apply load factor, resize arrays
 
     // keys
     Entry[] entries = new Entry[MAX_NODE_KEYS];
@@ -189,7 +203,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     void addChild(int childIndex, Node<K, V> child) {
       Preconditions.checkElementIndex(childIndex, MAX_NODE_DEGREE);
       this.isLeaf = false;
-      child.parent = Optional.of(this);
       children[childIndex] = child;
     }
   }
