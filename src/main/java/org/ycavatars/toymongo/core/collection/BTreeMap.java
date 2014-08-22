@@ -114,11 +114,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     public void clear() {
       BTreeMap.this.clear();
     }
-
-    public Spliterator<Map.Entry<K, V>> spliterator() {
-      // TODO return new EntrySpliterator<K, V>(TreeMap.this, null, null, 0, -1, 0);
-      return null;
-    }
   }
 
   class CopyEntryIterator<T> implements Iterator<T> {
@@ -160,7 +155,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     private Entry[] copyEntries(Node<K, V> node) {
       Entry[] copy = new Entry[node.keySize];
       for (int i = 0; i < node.keySize; i++) {
-        copy[i] = new Entry<K,V>(node.entries[i]);
+        copy[i] = new Entry<K, V>(node.entries[i]);
       }
       return copy;
     }
@@ -478,7 +473,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   }
 
   @Override public Set<Map.Entry<K, V>> entrySet() {
-    //TODO
     return new EntrySet();
   }
 
