@@ -111,4 +111,18 @@ public class TestBtreeMap {
       Assert.fail(Throwables.getStackTraceAsString(e));
     }
   }
+
+  @Test
+  public void testSplitChild_splitOnce() {
+    BTreeMap<String, String> map = new BTreeMap<>();
+    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
+      map.put("key" + i, "value" + i);
+    }
+    for (int i = 0; i < (BTreeMap.MAX_NODE_KEYS / 2); i++) {
+      map.put("skey" + i, "svalue" + i);
+    }
+
+    int expectedSize = BTreeMap.MAX_NODE_KEYS + BTreeMap.MAX_NODE_KEYS / 2;
+    Assert.assertEquals(expectedSize, map.size());
+  }
 }
