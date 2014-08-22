@@ -111,4 +111,24 @@ public class TestBtreeMap {
       Assert.fail(Throwables.getStackTraceAsString(e));
     }
   }
+
+  @Test
+  public void testRemove_fromEntrySet() {
+    // create map with data
+    List<Map.Entry<String, String>> entries =
+        Lists.newArrayListWithCapacity(BTreeMap.MAX_NODE_KEYS);
+    Map<String, String> that = new HashMap<>();
+    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
+      String key = "key" + i;
+      String value = "value" + i;
+      that.put(key, value);
+      entries.add(new BTreeMap.Entry<>(key, value));
+    }
+    BTreeMap<String, String> map = new BTreeMap<>(that);
+    Set<Map.Entry<String, String>> entrySet = map.entrySet();
+
+    entries.forEach((Map.Entry<String, String> e) -> entrySet.remove(e));
+
+    Assert.assertEquals(0, map.size());
+  }
 }
