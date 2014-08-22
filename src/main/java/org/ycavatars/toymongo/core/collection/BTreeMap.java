@@ -89,8 +89,8 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       }
       Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
       Object value = entry.getValue();
-      Optional<Entry<K, V>> p = getEntry(entry.getKey());
-      return p.isPresent() && p.get().value.equals(value);
+      Optional<Entry<K, V>> e = getEntry(entry.getKey());
+      return e.isPresent() && e.get().value.equals(value);
     }
 
     public boolean remove(Object o) {
@@ -99,9 +99,9 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       }
       Map.Entry<?, ?> entry = (Map.Entry<?, ?>) o;
       Object value = entry.getValue();
-      Optional<Entry<K, V>> p = getEntry(entry.getKey());
-      if (p.isPresent() && p.get().value.equals(value)) {
-        deleteEntry(p.get());
+      Optional<Entry<K, V>> e = getEntry(entry.getKey());
+      if (e.isPresent() && e.get().value.equals(value)) {
+        deleteEntry(e.get());
         return true;
       }
       return false;
@@ -118,6 +118,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
   class CopyEntryIterator<T> implements Iterator<T> {
     Entry[] entries;
+    Entry lastReturned;
 
     int currentIndex;
 
@@ -161,7 +162,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override public boolean hasNext() {
-      if (currentIndex == entries.length) {
+      if (currentIndex >= entries.length) {
         return false;
       }
       Optional<Entry<K, V>> next = Optional.ofNullable(entries[currentIndex]);
@@ -169,7 +170,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
     }
 
     @Override public T next() {
-      if (currentIndex == entries.length) {
+      if (currentIndex >= entries.length) {
         throw new NoSuchElementException();
       }
       if (modCount != expectedModCount) {
@@ -177,14 +178,27 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       }
 
       Entry<K, V> next = entries[currentIndex];
+      lastReturned = next;
       currentIndex++;
-      return (T) next;
+      return (T) lastReturned;
     }
 
     @Override public void forEachRemaining(Consumer<? super T> action) {
       while (hasNext()) {
         action.accept(next());
       }
+    }
+
+    @Override public void remove() {
+      if (lastReturned == null)
+        throw new IllegalStateException();
+      if (modCount != expectedModCount)
+        throw new ConcurrentModificationException();
+
+      currentIndex++;
+      deleteEntry(lastReturned);
+      expectedModCount = modCount;
+      lastReturned = null;
     }
   }
 
