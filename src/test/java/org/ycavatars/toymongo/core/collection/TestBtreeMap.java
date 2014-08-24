@@ -14,13 +14,15 @@ public class TestBtreeMap {
 
   @Test
   public void testPutAll_throughConstructor() {
+    // make it split
+    int size = BTreeMap.MAX_NODE_KEYS + 100;
     Map<String, String> that = new HashMap<>();
-    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
+    for (int i = 0; i < size; i++) {
       that.put("key" + i, "value" + i);
     }
-
     BTreeMap<String, String> map = new BTreeMap<>(that);
-    Assert.assertEquals(map.size(), BTreeMap.MAX_NODE_KEYS);
+
+    Assert.assertEquals(size, map.size());
   }
 
   @Test
@@ -31,38 +33,22 @@ public class TestBtreeMap {
 
     Assert.assertEquals(map.get("keyA"), "valueA");
     Assert.assertEquals(map.get("keyB"), "valueB");
+    Assert.assertEquals(2, map.size());
   }
 
-  @Test
-  public void testPut_rootIsFull() {
-    Map<String, String> that = new HashMap<>();
-    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
-      that.put("key" + i, "value" + i);
-    }
-
-    BTreeMap<String, String> map = new BTreeMap<>(that);
-    map.put("key1001", "value1001");
-    map.put("key1002", "value1002");
-    map.put("key1003", "value1003");
-
-    Assert.assertEquals(map.get("key1001"), "value1001");
-    Assert.assertEquals(map.get("key1002"), "value1002");
-    Assert.assertEquals(map.get("key1003"), "value1003");
-  }
 
   @Test
-  public void testCopyEntryIterator_fullRoot() {
+  public void testCopyEntryIterator_sortByKey() {
     // create map with data
     List<Map.Entry<String, String>> entries =
         Lists.newArrayListWithCapacity(BTreeMap.MAX_NODE_KEYS);
-    Map<String, String> that = new HashMap<>();
+    BTreeMap<String, String> map = new BTreeMap<>();
     for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
       String key = "key" + i;
       String value = "value" + i;
-      that.put(key, value);
+      map.put(key, value);
       entries.add(new BTreeMap.Entry<>(key, value));
     }
-    BTreeMap<String, String> map = new BTreeMap<>(that);
 
     // sort key in the same way as BTreeMap
     entries.sort(Comparator.comparing((Map.Entry e) -> (Comparable) e.getKey()));
@@ -124,5 +110,11 @@ public class TestBtreeMap {
 
     int expectedSize = BTreeMap.MAX_NODE_KEYS + BTreeMap.MAX_NODE_KEYS / 2;
     Assert.assertEquals(expectedSize, map.size());
+    for (int i = 0; i < BTreeMap.MAX_NODE_KEYS; i++) {
+      Assert.assertEquals("value" + i, map.get("key" + i));
+    }
+    for (int i = 0; i < (BTreeMap.MAX_NODE_KEYS / 2); i++) {
+      Assert.assertEquals("svalue" + i, map.get("skey" + i));
+    }
   }
 }

@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -290,7 +291,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
       newRoot.children[0] = root.get();
       root = Optional.of(newRoot);
 
-      splitChild(newRoot, 0); // split old root node which is the first child of newRoot
+      splitFullChild(newRoot, 0); // split old root node which is the first child of newRoot
       modCount++;
     }
   }
@@ -337,7 +338,7 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
 
       // if the child is full
       if (node.children[index].keySize == MAX_NODE_KEYS) {
-        splitChild(node, index);
+        splitFullChild(node, index);
         if (compare(entry.key, node.entries[index].key) > 0) {
           index++;
         }
@@ -353,41 +354,69 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    * @param index
    */
   @SuppressWarnings("unchecked")
-  private void splitChild(Node<K, V> parent, int index) {
-    Node<K, V> rightNode = new Node<>();
-    Node<K, V> fullNode = parent.children[index];
+  private void splitFullChild(Node<K, V> parent, int index) {
+    Node<K, V> child = parent.children[index];
+    Node<K, V> newNode = new Node<>();
 
-    assert Optional.ofNullable(fullNode).isPresent();
+    assert Optional.ofNullable(child).isPresent();
+    assert child.keySize == child.entries.length : "the child node should be full";
 
-    rightNode.isLeaf = fullNode.isLeaf;
+    newNode.isLeaf = child.isLeaf;
 
-    assert fullNode.entries[MAX_NODE_KEYS - MIN_NODE_KEYS] != null;
+    Entry<K, V> medianEntry = child.entries[MIN_NODE_KEYS];
+    // Move the later half of entries to newNode.entries.
+    System.arraycopy(
+        child.entries,
+        MIN_NODE_KEYS + 1, // child.entries[MIN_NODE_KEYS] will be the median key
+        newNode.entries,
+        0,
+        MAX_NODE_KEYS - MIN_NODE_KEYS - 1 // minus median key
+    );
+    newNode.keySize = MAX_NODE_KEYS - MIN_NODE_KEYS - 1;
+    child.keySize = MIN_NODE_KEYS;
+    child.entries = keepElements(child.entries, MIN_NODE_KEYS);
 
-    // fullNode.entries[MIN_NODE_KEYS] will be the median key
-    System.arraycopy(fullNode.entries, MIN_NODE_KEYS + 1,
-        rightNode.entries, 0, MAX_NODE_KEYS - MIN_NODE_KEYS - 1);
-    rightNode.keySize = MAX_NODE_KEYS - MIN_NODE_KEYS;
-
-    if (!fullNode.isLeaf) {
-      System.arraycopy(fullNode.children, MIN_NODE_KEYS + 1, rightNode.children, 0
-          , fullNode.keySize + 1 - MIN_NODE_KEYS // num of children is more than keySize
+    // Leaf node will not be full, so it won't have any children.
+    if (!child.isLeaf) {
+      System.arraycopy(
+          child.children,
+          MIN_NODE_DEGREE,
+          newNode.children,
+          0,
+          MAX_NODE_DEGREE - MIN_NODE_DEGREE
       );
+      child.children = keepElements(child.children, MIN_NODE_DEGREE);
     }
-    fullNode.keySize = MIN_NODE_KEYS;
 
-    // shift children to right
-    System.arraycopy(parent.children, index, parent.children, index + 1,
-        parent.keySize + 1 - index);
+    // shift children right
+    System.arraycopy(parent.children, index + 1, parent.children, index + 2,
+        parent.keySize - index);
     // parent.children[index] still point to the fullNode
-    parent.addChild(index + 1, rightNode);
+    parent.addChild(index + 1, newNode);
 
-    // shift keys to right
+    // shift keys right
     System.arraycopy(parent.entries, index, parent.entries, index + 1,
         parent.keySize - index);
     // set the median key
-    parent.entries[index] = fullNode.entries[MIN_NODE_KEYS];
+    parent.entries[index] = medianEntry;
 
     parent.keySize++;
+  }
+
+  /**
+   * Returns a new array which contains original[0...newSize-1]. The length of
+   * returned array is the same as {@code original}.
+   *
+   * @param original
+   * @param newSize
+   * @param <T>
+   * @return
+   */
+  private static <T> T[] keepElements(T[] original, int newSize) {
+    T[] newArray = (T[]) Array.newInstance(original.getClass().getComponentType(),
+        original.length);
+    System.arraycopy(original, 0, newArray, 0, newSize);
+    return newArray;
   }
 
   /**
