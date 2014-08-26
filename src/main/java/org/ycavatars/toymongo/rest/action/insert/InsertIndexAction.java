@@ -1,4 +1,4 @@
-package org.yc.toymongo.rest.action.insert;
+package org.ycavatars.toymongo.rest.action.insert;
 
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
