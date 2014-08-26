@@ -47,8 +47,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
    */
   private int modCount = 0;
 
-  private Optional<EntrySet> entrySet = Optional.empty();
-
   /**
    * Create an empty BTreeMap which uses the natural ordering of keys.
    * Note that every key object has to implement {@link java.lang.Comparable}.
@@ -56,7 +54,6 @@ public class BTreeMap<K, V> extends AbstractMap<K, V> {
   public BTreeMap() {
     comparator = Optional.empty();
   }
-
 
   /**
    * @param comparator which is used to sort the keys
